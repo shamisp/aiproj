@@ -1,6 +1,5 @@
 import numpy as n
 import numpy.random as r
-import argparse as ap
 import os
 import os.path
 
@@ -49,30 +48,33 @@ def gen_matrix(args):
 		rows[i] = row
 	return fix_matrix(rows, args.type)
 
-# get command-line arguments
-parser = ap.ArgumentParser('ETC generator')
-parser.add_argument('--inconsistent', action='store_const', dest='type', const='i', help="Generate inconsistent matrices")
-parser.add_argument('--consistent', action='store_const', dest='type', const='c', help="Generate consistent matrices")
-parser.add_argument('--semi', action='store_const', dest='type', const='s', help="Generate semi-consistent matrices")
-parser.add_argument('-t', '--tasks', dest='tasks', action='store', default=512, type=int, help='The number of tasks')
-parser.add_argument('-m', '--machines', action='store', default=16, type=int, help='The number of machines')
-parser.add_argument('-tv', '--task-variance', dest='t_var', choices=[ 'LOW', 'HIGH' ], default='LOW', help='The task heterogeneity')
-parser.add_argument('-mv', '--machine-variance', dest='m_var', choices=[ 'LOW', 'HIGH' ], default='LOW', help='The machine heterogeneity')
-parser.add_argument('-n', action='store', default=50, type=int, help='The number of matrices to generate')
-parser.add_argument('-d', '--dest', dest='dir', action='store', default='.' + os.path.sep, type=str, help='The destination directory')
-args = parser.parse_args() # ex. Namespace(m_var='HIGH', machines=16, n=1, t_var='LOW', tasks=512, type='c')
+if __name__ == '__main__':
+	import argparse as ap
+	
+	# get command-line arguments
+	parser = ap.ArgumentParser('ETC generator')
+	parser.add_argument('--inconsistent', action='store_const', dest='type', const='i', help="Generate inconsistent matrices")
+	parser.add_argument('--consistent', action='store_const', dest='type', const='c', help="Generate consistent matrices")
+	parser.add_argument('--semi', action='store_const', dest='type', const='s', help="Generate semi-consistent matrices")
+	parser.add_argument('-t', '--tasks', dest='tasks', action='store', default=512, type=int, help='The number of tasks')
+	parser.add_argument('-m', '--machines', action='store', default=16, type=int, help='The number of machines')
+	parser.add_argument('-tv', '--task-variance', dest='t_var', choices=[ 'LOW', 'HIGH' ], default='LOW', help='The task heterogeneity')
+	parser.add_argument('-mv', '--machine-variance', dest='m_var', choices=[ 'LOW', 'HIGH' ], default='LOW', help='The machine heterogeneity')
+	parser.add_argument('-n', action='store', default=50, type=int, help='The number of matrices to generate')
+	parser.add_argument('-d', '--dest', dest='dir', action='store', default='.' + os.path.sep, type=str, help='The destination directory')
+	args = parser.parse_args() # ex. Namespace(m_var='HIGH', machines=16, n=1, t_var='LOW', tasks=512, type='c')
 
-if args.type == None:
-	args.type = 'c' # default is consistent
+	if args.type == None:
+		args.type = 'c' # default is consistent
 
-# check for directory
-if not os.path.isdir(args.dir):
-	os.mkdir(args.dir)
+	# check for directory
+	if not os.path.isdir(args.dir):
+		os.mkdir(args.dir)
 
-header = str(vars(args))
-for i in range(args.n):
-	etc_matrix = gen_matrix(args)
+	header = str(vars(args))
+	for i in range(args.n):
+		etc_matrix = gen_matrix(args)
 
-	fname = args.dir + os.path.sep + str(i + 1) + '.csv'
-	#print fname
-	n.savetxt(fname, etc_matrix, fmt='%d', delimiter=',', header=header)
+		fname = args.dir + os.path.sep + str(i + 1) + '.csv'
+		#print fname
+		n.savetxt(fname, etc_matrix, fmt='%d', delimiter=',', header=header)
