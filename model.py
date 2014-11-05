@@ -12,29 +12,40 @@ class Model:
 class Mapping:
 	def __init__(self, model):
 		self._model = model
-		self._machines_queues = [ [] for i in range(model.nmachines)]
+		self._machine_tasks = [ [] for i in range(model.nmachines) ]
+		self._task_machines = [ None for i in range(model.ntasks) ]
+		self._etcs = [ 0 for i in range(model.nmachines) ]
 
 	def assign(self, t, m):
-		assert(not t in self._machines_queues[m])
-		self._machines_queues[m].append(t)
+		assert(not t in self._machine_tasks[m])
+		assert(self._task_machines[t] == None)
+
+		self._machine_tasks[m].append(t)
+		self._task_machines[t] = m
+		self._etcs[m] += self._model.etc(t, m)
 
 	def unassign(self, t):
-		for queue in self._machines_queues:
-			if t in queue:
-				queue.remove(t)
+		m = self._task_machines[t]
+		self._task_machines[t] = None
+		self._machine_tasks[m].remove(t)
+		self._etcs[m] -= self._model.etc(t, m)
 
 	def etc(self, m):
-		return reduce(
-			lambda etc, t: etc + self._model.etc(t, m),
-			self._machines_queues[m],
-			0)
+		return self._etcs[m]
 
 	def makespan(self):
-		etcs = [ self.etc(m) for m in range(self._model.nmachines) ]
-		return max(etcs)
+		return max(self._etcs)
+
+	def machine(self, t):
+		''' returns the machine t is assigned to '''
+		return self._task_machines[t]
+
+	def similar(self, otherMapping):
+		''' returns the # of task-to-machine assignments that are shared between these two mappings '''
+		return numpy.array_equal(self._task_machines, otherMapping._task_machines)
 
 	def __str__(self):
-		return str(self._machines_queues)
+		return str(self._machine_tasks)
 
 if __name__ == '__main__':
 	model = Model('./data/c-l-l/1.csv')
