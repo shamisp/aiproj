@@ -1,6 +1,9 @@
 from subprocess import call
 import os.path
 
+TASKS = '75'
+MACHS = '4'
+
 # generate the 12 different cases:
 for consistency, switch in { 'c': '--consistent', 'i': '--inconsistent', 's': '--semi' }.iteritems():
 	for t_var in [ 'LOW', 'HIGH' ]:
@@ -9,6 +12,6 @@ for consistency, switch in { 'c': '--consistent', 'i': '--inconsistent', 's': '-
 			m_prefix = m_var[0].lower()
 
 			dirname = '.' + os.path.sep + consistency + '-' + t_prefix + '-' + m_prefix
-			cmd = [ 'python',  'gen.py', switch, '-t', '512', '-m', '16', '-tv', t_var, '-mv', m_var, '-n', '50', '-d', dirname ]
+			cmd = [ 'python',  'gen.py', switch, '-t', TASKS, '-m', MACHS, '-tv', t_var, '-mv', m_var, '-n', '50', '-d', dirname ]
 			print cmd
 			call(cmd)

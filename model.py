@@ -10,21 +10,32 @@ class Model:
 		return self._etc[t, m]
 
 class Mapping:
-	def __init__(self, model):
+	def __init__(self, model, reversable = True):
+		'''
+		reversable: denotes whether this object should keep track of which task is assigned to which machine.
+			This is useful for the A* algorithm, as it doesn't need for this class to keep track of queues, etc.
+		'''
 		self._model = model
-		self._machine_tasks = [ [] for i in range(model.nmachines) ]
-		self._task_machines = [ None for i in range(model.ntasks) ]
+
+		if reversable:
+			self._machine_tasks = [ [] for i in range(model.nmachines) ]
+			self._task_machines = [ None for i in range(model.ntasks) ]
+		
 		self._etcs = [ 0 for i in range(model.nmachines) ]
+		self._reversable = reversable
 
 	def assign(self, t, m):
-		assert(not t in self._machine_tasks[m])
-		assert(self._task_machines[t] == None)
+		if self._reversable:
+			assert(not t in self._machine_tasks[m])
+			assert(self._task_machines[t] == None)
+			self._machine_tasks[m].append(t)
+			self._task_machines[t] = m
 
-		self._machine_tasks[m].append(t)
-		self._task_machines[t] = m
 		self._etcs[m] += self._model.etc(t, m)
 
 	def unassign(self, t):
+		assert(self._reversable)
+
 		m = self._task_machines[t]
 		self._task_machines[t] = None
 		self._machine_tasks[m].remove(t)
@@ -38,13 +49,16 @@ class Mapping:
 
 	def machine(self, t):
 		''' returns the machine t is assigned to '''
+		assert(self._reversable)
 		return self._task_machines[t]
 
 	def similar(self, otherMapping):
 		''' returns the # of task-to-machine assignments that are shared between these two mappings '''
+		assert(self._reversable)
 		return numpy.array_equal(self._task_machines, otherMapping._task_machines)
 
 	def __str__(self):
+		assert(self._reversable)
 		return str(self._machine_tasks)
 
 if __name__ == '__main__':
