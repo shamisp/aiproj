@@ -33,6 +33,6 @@ while len(unassigned) > 0:
 
 	mapping.assign(t, m)
 	unassigned.remove(t)
-	print len(unassigned)
+	#print len(unassigned)
 
 print(mapping.makespan())
