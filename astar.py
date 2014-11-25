@@ -1,7 +1,12 @@
+import argparse
 import model
 import sys
 
 MAX_NODES = 64
+
+parser = argparse.ArgumentParser('Min-Min')
+parser.add_argument('-f', '--data-file', dest='data_file', required=True)
+args = parser.parse_args()
 
 class Node:
 	''' An A* node '''
@@ -118,7 +123,7 @@ def h2(n):
 # def h(n):
 # 	return max(h1(n), h2(n))
 
-data = model.Model('./data/i-h-h/1.csv')
+data = model.Model(args.data_file)
 solution = astar_search(data, lambda n: max(h1(n), h2(n)))
 
 print solution.makespan()
