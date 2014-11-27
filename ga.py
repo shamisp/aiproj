@@ -4,6 +4,7 @@ import itertools
 import numpy
 import random
 import bisect
+import minmin
 from chromosome import Chromosome , crossover
 
 parser = argparse.ArgumentParser('GA')
@@ -18,13 +19,21 @@ TOTAL_ITER=1000     # total iterations
 MAX_NO_CHANGE=150   # no change in elite chromosome
 CROSSOVER_PRB=0.6   # crossover probability 
 MUTATION_PRB=0.4    # mutation probability
+DEBUG = False
 
 # Generate initial population. We seed it with one min-min value
 def generate_new_population(M):
     chrs=[]
-    for _ in itertools.repeat(None, P_SIZE):
+    for _ in itertools.repeat(None, P_SIZE-1):
         chrs.append(Chromosome(M))
-    # Update the code to seed one entry from min-min
+    # Seed min-min
+    ch = Chromosome(M, tabu_list=None, empty=True)
+    mapping = minmin.run(M)
+    if DEBUG: print mapping, mapping.makespan()
+    
+    for t in range(mapping._model.ntasks):
+        ch.map.assign(t, mapping.machine(t))
+    chrs.append(ch)    
     return chrs
 '''
 def calc_probability(chrs):
@@ -99,19 +108,25 @@ def select_for_crossover(chrs):
 
 def mutate_chromosome(ch):
     if random.random() <= MUTATION_PRB:
-        ch.apply_mutatation()  
+        ch.apply_mutatation()
+        if DEBUG: print "M: ", ch  
 
+''' Not used
 def mutate_population(chrs):
     for ch in len(chrs):
         if random.random() <= MUTATION_PRB:
             ch.apply_mutatation()  
-
+'''
+            
 def crossover_population(M, chrs):
     c_ppl = select_for_crossover(chrs)
     for _ in c_ppl:
         a = c_ppl.pop()
         b = c_ppl.pop()
         c = crossover(M, a, b)
+        if DEBUG: print "A: ", a
+        if DEBUG: print "B: ", b
+        if DEBUG: print "C: ", c
         mutate_chromosome(c)
         chrs.append(c)
 
@@ -130,6 +145,7 @@ def ga(M):
         
         if(elite.value() == elite_value):
             elite_count += 1
+            if DEBUG: print "No change in elite ", elite_value
         else:
             if elite.value() > elite_value and -1 != elite_value:
                 print "Bug ! new elite > old elite", elite.value, elite_value

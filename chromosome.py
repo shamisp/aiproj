@@ -42,9 +42,20 @@ class Chromosome:
     
     def apply_mutatation(self):
         rand_task = random.randint(0, self.model.ntasks-1)
+        # Making sure that the value is actually changed
+        while True:
+            curr_m = self.map.machine(rand_task)
+            new_m = random.randint(0, self.model.nmachines - 1)
+            if new_m != curr_m:
+                break
         self.map.unassign(rand_task)
-        self.map.assign(rand_task, random.randint(0, self.model.nmachines - 1))
-
+        self.map.assign(rand_task, new_m)
+    
+    def __repr__(self):
+        return str(self.map._task_machines)
+    
+    def __str__(self):
+        return str(self.map._task_machines)
 
 def crossover(M, a, b):
     assert a.model.ntasks ==  b.model.ntasks
