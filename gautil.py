@@ -64,10 +64,21 @@ def calc_probability(chrs):
 def find_elite_index(prb):
     return numpy.argmax(numpy.array(prb))
 
-def find_elite_ch(chrs, prb):
-    assert len(prb) == len(chrs)
-    return (chrs[find_elite_index(prb)], 
-            find_elite_index(prb)) 
+def find_elite_ch(chrs, prb=None):
+    if (None != prb):
+        assert len(prb) == len(chrs)
+        return (chrs[find_elite_index(prb)], 
+                find_elite_index(prb))
+    else:
+        # if now prb was provided we have todo
+        # manual search
+        minv=-1
+        min_index=-1
+        for i in range(len(chrs)):
+            if i == 0 or chrs[i].value() < minv :
+                minv = chrs[i].value()
+                min_index = i
+        return (chrs[min_index], min_index)
 
 def select_with_probability(num, prb, chrs):
     assert len(prb) == len(chrs)
@@ -119,3 +130,47 @@ def crossover_population(M, chrs):
         if DEBUG: print "C: ", c
         mutate_chromosome(c)
         chrs.append(c)
+
+# GSA related code
+TEMP_ADJ = 0.9 # 10% for each step
+
+def calc_temp(chrs):
+    size = len(chrs)
+    total = 0
+    for ch in chrs:
+        total+=ch.value()
+    return total/size # average
+
+def adjust_temp(temp):
+    return temp*TEMP_ADJ
+
+def gsacrossover_population(M, chrs, temp):
+    c_ppl = select_for_crossover(chrs)
+    for _ in c_ppl:
+        minch = maxch = None
+        a = c_ppl.pop()
+        b = c_ppl.pop()
+        c = crossover(M, a, b)
+        if DEBUG: print "A: ", a
+        if DEBUG: print "B: ", b
+        if DEBUG: print "C: ", c
+        mutate_chromosome(c)
+        a_val=a.value()
+        b_val=b.value()
+        c_val=c.value()
+        
+        if (a_val > b_val):
+            maxch = a
+            minch = b
+        else:
+            maxch = b
+            minch = a
+        
+        if c_val < (maxch.value() + temp) :
+            # accept mutant to new population
+            chrs.append(c)
+            chrs.remove(maxch)
+        
+        # otherwise we don't accept the mutant to
+        # the new population
+    assert len(chrs) == P_SIZE-1
