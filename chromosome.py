@@ -53,12 +53,12 @@ def crossover(M, a, b):
     assert M.ntasks ==  a.model.ntasks
     
     new = Chromosome(M, tabu_list=None, empty=True)
-    intersec = random.randint(0, M.model.ntasks-1)
+    intersec = random.randint(0, M.ntasks-1)
     
     for t in range(intersec):
-        new.map.assign(t, a.model.machine(t))
+        new.map.assign(t, a.map.machine(t))
     
-    for t in range(intersec,M.model.ntasks):
-        new.map.assign(t, b.model.machine(t))
+    for t in range(intersec,M.ntasks):
+        new.map.assign(t, b.map.machine(t))
         
     return new

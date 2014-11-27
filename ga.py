@@ -26,7 +26,7 @@ def generate_new_population(M):
         chrs.append(Chromosome(M))
     # Update the code to seed one entry from min-min
     return chrs
-
+'''
 def calc_probability(chrs):
     total = 0
     result=[]
@@ -38,6 +38,28 @@ def calc_probability(chrs):
         result.append(ch.value()/total)
     
     assert len(result) == len(chrs)    
+    return result
+'''
+
+def calc_probability(chrs):
+    total = 0
+    rtotal = 0
+    result=[]
+    
+    for ch in chrs:
+        total+=ch.value()
+    
+    for ch in chrs:
+        # lowest value should have higher probability
+        # this normalization is broken
+        result.append(total/ch.value())
+        rtotal+=total/ch.value()
+    
+    for i in range(len(result)):
+        result[i] = result[i]/rtotal
+
+    assert len(result) == len(chrs)    
+    
     return result
 
 def find_elite_index(prb):
@@ -61,7 +83,7 @@ def select_with_probability(num, prb, chrs):
     for _ in range(num):
         x = random.random()
         index = bisect.bisect(acc_prb, x)
-        result.append(prb[index])
+        result.append(chrs[index])
     
     return result
 
