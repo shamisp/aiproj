@@ -12,18 +12,28 @@ MUTATION_PRB=0.4    # mutation probability
 DEBUG = False
 
 # Generate initial population. We seed it with one min-min value
-def generate_new_population(M):
+def generate_new_population(M, seed=True):
     chrs=[]
-    for _ in itertools.repeat(None, P_SIZE-1):
-        chrs.append(Chromosome(M))
-    # Seed min-min
-    ch = Chromosome(M, tabu_list=None, empty=True)
-    mapping = minmin.run(M)
-    if DEBUG: print mapping, mapping.makespan()
     
-    for t in range(mapping._model.ntasks):
-        ch.map.assign(t, mapping.machine(t))
-    chrs.append(ch)    
+    if seed:
+        # Seeding one chromosome with one
+        # minmin chromosome 
+        for _ in itertools.repeat(None, P_SIZE-1):
+            chrs.append(Chromosome(M))
+        # Seed min-min
+        ch = Chromosome(M, tabu_list=None, empty=True)
+        mapping = minmin.run(M)
+        if DEBUG: print mapping, mapping.makespan()
+        
+        for t in range(mapping._model.ntasks):
+            ch.map.assign(t, mapping.machine(t))
+        chrs.append(ch)
+        print "Seeded chromosome value:", ch.value()
+    else:
+        # No seeding happens here
+        for _ in itertools.repeat(None, P_SIZE):
+            chrs.append(Chromosome(M))
+            
     return chrs
 '''
 def calc_probability(chrs):
