@@ -14,6 +14,7 @@ MAX_SHORT_HOPS=1200
 
 num_short_hops=0
 num_long_hops=0
+total_short_hops=0
 tabu_list=[]
 best_c = None
 
@@ -33,8 +34,8 @@ def tabu_check(c, tabu_list):
                 break
     return again
 
-while num_long_hops + num_short_hops < MAX_LONG_HOPS:
-    print num_long_hops + num_short_hops, MAX_LONG_HOPS
+while num_long_hops + total_short_hops < MAX_LONG_HOPS:
+    print num_long_hops + total_short_hops, MAX_LONG_HOPS
     c = chromosome.Chromosome(M, tabu_list)
     
     if (tabu_check(c, tabu_list)):
@@ -63,6 +64,7 @@ while num_long_hops + num_short_hops < MAX_LONG_HOPS:
     # append new value to the tupple list
     tabu_list.append(c)
     num_long_hops+=1
+    total_short_hops+=num_short_hops
     
 # Find optimal mapping from the tabu list
 
