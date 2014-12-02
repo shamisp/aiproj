@@ -1,8 +1,9 @@
 import argparse
+import bisect
 import model
 import sys
 
-MAX_NODES = 64
+MAX_NODES = 1024 #64
 
 parser = argparse.ArgumentParser('Min-Min')
 parser.add_argument('-f', '--data-file', dest='data_file', required=True)
@@ -10,36 +11,85 @@ args = parser.parse_args()
 
 class Node:
 	''' An A* node '''
-	def __init__(self, t, m, model, parent = None):
+	def __init__(self, t, m, _model, parent = None):
 		self.t = t
 		self.m = m
-		self.model = model
+		self.model = _model
 		self.parent = parent
+		self.mapping = parent.mapping.copy() if parent != None else model.Mapping(_model, reversable = False)
+		self.mapping.assign(t, m)
+		self.mcts = {}
+		self._f = None
+		self._g = None
+		self._h = None
 
 		if parent == None:
 			self.depth = 0
 		else:
 			self.depth = parent.depth + 1
 
-		self._mapping = None
-
-	def mapping(self):
-		if self._mapping != None:
-			return self._mapping
-
-		self._mapping = model.Mapping(self.model, reversable = False)
-		n = self
-		while n != None:
-			self._mapping.assign(n.t, n.m)
-			n = n.parent
-		return self._mapping
-
-	def g(self):
-		# TODO: innefficient?
-		return self.mapping().makespan()
-
 	def is_leaf(self):
 		return (self.depth + 1) == self.model.ntasks
+
+	def mct_time(self, t):
+		if not t in self.mcts:
+			self.mcts[t] = min([ self.mapping.etc(j) + self.model.etc(t, j) for j in range(self.model.nmachines) ])
+		return self.mcts[t]
+
+	def f(self):
+		if self._f == None:
+			self._f = self.g() + self.h()
+		return self._f
+
+	def g(self):
+		if self._g == None:
+			self._g = self.mapping.makespan()
+		return self._g
+
+	def h(self):
+		if self._h != None:
+			return self._h
+
+		def _h1():
+			def mmct():
+				return max([ self.mct_time(i) for i in range(self.model.ntasks) ])
+			return max(0, mmct() - self.g())
+
+		def _h2():
+			def sdma():
+				mkspn = self.mapping.makespan()
+				return sum([ mkspn - self.mapping.etc(m) for m in range(self.model.nmachines) ])
+
+			def smet():
+				return sum([ self.mct_time(i) for i in range(self.t + 1, self.model.ntasks) ])
+
+			return max(0, float(smet() - sdma()) / float(self.model.nmachines))
+
+		self._h = max(_h1(), _h2())
+		return self._h
+
+	def __cmp__(self, other):
+		if other == None:
+			return 1
+
+		c = self.f() - other.f()
+		if c == 0:
+			# if the two nodes' f() is the same, break ties based on depth,
+			# prioritizing nodes that are deaper (highest depth to lowest)
+			c = other.depth - self.depth
+		
+		if c < 0:
+			return -1
+		elif c > 0:
+			return 1
+		else:
+			return 0
+
+	def __str__(self):
+		return str(self.f())
+
+	def __repr__(self):
+		return self.__str__()
 
 def astar_next_level(data, parent):
 	t = 0 if parent == None else (parent.depth + 1)
@@ -50,81 +100,35 @@ def astar_next_level(data, parent):
 		next.append(Node(t, m, data, parent))
 	return next
 
-def astar_search(data, H):
+def astar_search(data):
 	''' Implement A* search '''
-	def _f(n):
-		return n.g() + H(n)
+	unexplored = []
+	def _extend_from(parent):
+		for n_next in astar_next_level(data, parent):
+			bisect.insort_left(unexplored, n_next)
+		while len(unexplored) > MAX_NODES:
+	 		unexplored.pop(MAX_NODES)
 
-	def _sort_and_truncate(l):
-		def _cmp(n1, n2):
-			c = _f(n1) - _f(n2)
-			if c < 0:
-				return -1
-			elif c > 0:
-				return 1
-			else:
-				# if the two nodes' _f(n) is the same, break ties based on depth,
-				# prioritizing nodes that are deaper (highest depth to lowest)
-				return n2.depth - n1.depth
-		l.sort(cmp = _cmp)
-		while len(l) > MAX_NODES:
-			l.pop(MAX_NODES)
-
-	unexplored = astar_next_level(data, None)
-	_sort_and_truncate(unexplored)
+	_extend_from(None)
+	#unexplored = sorted(unexplored)
+	last_task = 0
 	while True:
-		fs = [ _f(n) for n in unexplored ]
-		print fs[0:10], len(fs)
+		fs = [ n.f() for n in unexplored[0:10] ]
+		# print fs, len(unexplored)
 
 		top = unexplored.pop(0)
-		print 'Exploring task', top.depth, _f(top), len(unexplored)
+		# print 'Exploring task', top.depth, top.f(), len(unexplored)
+		if top.depth > last_task:
+			last_task = top.depth
+			print 'Exploring task', last_task
+		
 		if top.is_leaf():
-			return top.mapping()
+			return top.mapping
 
-		unexplored.extend(astar_next_level(data, top))
-		_sort_and_truncate(unexplored)
-
-def mct_time(n, t):
-	_mct = sys.maxint
-	for j in range(n.model.nmachines):
-		ct = n.mapping().etc(j) + n.model.etc(t, j)
-		if ct < _mct:
-			_mct = ct
-	return _mct
-
-def h1(n):
-	#def mct_machines():
-	def mmct(n):
-		_max = 0
-		for i in range(n.model.ntasks):
-			_mct = mct_time(n, i)
-			if _mct > _max:
-				_max = _mct
-		return _max
-
-	return max(0, mmct(n) - n.g())
-
-def h2(n):
-	def sdma(n):
-		_sum = 0
-		mkspn = n.mapping().makespan()
-		for m in range(n.model.nmachines):
-			_sum += mkspn - n.mapping().etc(m)
-		return _sum
-
-	def smet(n):
-		_totMct = 0
-		for i in range(n.t + 1, n.model.ntasks):
-			_totMct += mct_time(n, i)
-		return _totMct
-
-	return max(0, float(smet(n) - sdma(n)) / float(n.model.nmachines))
-
-# def h(n):
-# 	return max(h1(n), h2(n))
+		_extend_from(top)
 
 data = model.Model(args.data_file)
-solution = astar_search(data, lambda n: max(h1(n), h2(n)))
+solution = astar_search(data) #lambda n: max(h1(n), h2(n)))
 
 print solution.makespan()
 

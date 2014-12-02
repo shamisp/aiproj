@@ -1,8 +1,8 @@
 from subprocess import call
 import os.path
 
-TASKS = '512'#'75'
-MACHS = '16'#'4'
+TASKS = '256' #'512'
+MACHS = '8' #'16'
 
 # generate the 12 different cases:
 for consistency, switch in { 'c': '--consistent', 'i': '--inconsistent', 's': '--semi' }.iteritems():

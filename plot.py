@@ -41,6 +41,8 @@ VARIANT = args.variant
 
 algorithms = {}
 algorithms['astar'] = 'A*'
+algorithms['ga'] = 'GA'
+algorithms['gsa'] = 'GSA'
 algorithms['mct'] = 'MCT'
 algorithms['minmin'] = 'Min-Min'
 algorithms['olb'] = 'OLB'

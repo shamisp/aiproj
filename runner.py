@@ -20,7 +20,7 @@ for x in ['c', 'i', 's']:
 			_mkdir(cwd + '/out/' + var + '/')
 
 parser = argparse.ArgumentParser('Simulation Runner')
-parser.add_argument('-a', choices=[ 'astar', 'mct', 'minmin', 'olb', 'tabu' ], dest='algo', help='The algorithm to run', required=True)
+parser.add_argument('-a', choices=[ 'astar', 'ga', 'gsa', 'mct', 'minmin', 'olb', 'tabu' ], dest='algo', help='The algorithm to run', required=True)
 parser.add_argument('-n', type=int, help='The number of trials to run', default=50)
 parser.add_argument('-v', choices=variants, dest='variant', help='The variant of the data file to run', default='i-l-l')
 args = parser.parse_args()

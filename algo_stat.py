@@ -2,19 +2,25 @@ import glob
 import numpy
 
 def makespan(f):
-	f = open(f, 'r')
+	try:
+		f = open(f, 'r')
 
-	last_line = ''
-	for l in f:
-		last_line = l
+		last_line = ''
+		for l in f:
+			last_line = l
 
-	return float(last_line)
+		last_token = last_line.split()
+		last_token = last_token[len(last_token) - 1]
+		return float(last_token)
+	except:
+		return None
 
 def makespans(algo, variant):
-	return sorted([
-			makespan(f)
-			for f
-			in glob.glob('./out/' + variant + '/' + algo + '.*') ])
+	return sorted(
+			filter(lambda x: x != None, [
+				makespan(f)
+				for f
+				in glob.glob('./out/' + variant + '/' + algo + '.*') ]))
 
 def box_and_whisker_data(l):
 	if len(l) % 2 == 0:
@@ -59,7 +65,7 @@ if __name__ == '__main__':
 				variants.append(var)
 
 	parser = argparse.ArgumentParser('Data Collector')
-	parser.add_argument('-a', choices=[ 'astar', 'mct', 'minmin', 'olb', 'tabu' ], dest='algo', help='The algorithm to run', required=True)
+	parser.add_argument('-a', choices=[ 'astar', 'ga', 'gsa', 'mct', 'minmin', 'olb', 'tabu' ], dest='algo', help='The algorithm to run', required=True)
 	parser.add_argument('-v', choices=variants, dest='variant', help='The variant of the data file to run', default='i-l-l')
 	args = parser.parse_args()
 	# print ','.join(map(

@@ -24,6 +24,16 @@ class Mapping:
 		self._etcs = [ 0 for i in range(model.nmachines) ]
 		self._reversable = reversable
 
+	def copy(self):
+		m = Mapping(self._model, self._reversable)
+		m._etcs = self._etcs[:] # copy
+
+		if self._reversable:
+			m._machine_tasks = self._machine_tasks[:] # copy
+			m._task_machines = self._task_machines[:] # copy
+
+		return m
+
 	def assign(self, t, m):
 		if self._reversable:
 			assert(not t in self._machine_tasks[m])
